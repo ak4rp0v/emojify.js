@@ -26,7 +26,7 @@ gulp.task('default', ['compile']);
 
 gulp.task('compile', ['script', 'images-and-styles']);
 
-gulp.task('release', ['update', 'compile', 'bump']);
+gulp.task('release', ['compile', 'bump']);
 
 gulp.task('script', function(){
     var pkg = require('./package.json');
@@ -49,9 +49,9 @@ gulp.task('script', function(){
 
 var getEmoticonFilter = function(){
     var emoticons = [
-        'smile', 'scream', 'smirk', 'grinning', 'stuck_out_tongue_closed_eyes', 'stuck_out_tongue_winking_eye',
-        'rage', 'frowning', 'sob', 'kissing_heart', 'wink', 'pensive', 'confounded', 'flushed', 'relaxed', 'mask',
-        'heart', 'broken_heart'
+        'named', 'heart', 'broken_heart', 'blush', 'smile', 'wink', 'disappointed', 'cry', 'smiley', 'kissing_heart',
+        'laughing', 'sunglasses', 'confused', 'neutral_face', 'monkey_face', 'open_mouth', 'angry', 'stuck_out_tongue',
+        'stuck_out_tongue_winking_eye', 'stuck_out_tongue_closed_eyes', 'smirk', 'rage', 'confounded', 'relaxed'
     ];
 
     return $.filter(function(file){
@@ -192,28 +192,4 @@ gulp.task('bump', function(done){
             .pipe(gulp.dest('./'))
             .on('end', done);
     });
-});
-
-gulp.task('update', function(done){
-    var emoji = '';
-
-    del('./src/images/emoji');
-
-    $.download('https://github.com/arvida/emoji-cheat-sheet.com/archive/master.zip')
-        .pipe($.unzip())
-        .pipe($.filter(function(file){
-            return minimatch(file.path, '**/public/graphics/emojis/*.png');
-        }))
-        .pipe($.rename({ dirname: './' }))
-        .pipe(gulp.dest('./src/images/emoji'))
-        .pipe(through2({ objectMode: true }, function(file, enc, cb){
-            emoji += ',' + path.basename(file.path, path.extname(file.path));
-            this.push(file);
-            cb();
-        }, function(){
-            gulp.src('./src/emojify.js')
-                .pipe($.replace(/(\/\*##EMOJILIST\*\/).+$/m, '$1"' + emoji.substr(1) + '";'))
-                .pipe(gulp.dest('./src'))
-                .on('end', done);
-        }));
 });
