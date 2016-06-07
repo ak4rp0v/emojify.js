@@ -23,16 +23,16 @@
              * "update" gulp task. Do not remove the comment as this will
              * cause the gulp task to stop working.
              */
-            var namedEmojiString =
-            /*##EMOJILIST*/"";
+            //var namedEmojiString =
+            /*##EMOJILIST*/ //"";
 
-            var namedEmoji = namedEmojiString.split(/,/);
+            //var namedEmoji = namedEmojiString.split(/,/);
 
             /* A hash with the named emoji as keys */
-            var namedMatchHash = namedEmoji.reduce(function(memo, v) {
-                memo[v] = true;
-                return memo;
-            }, {});
+            //var namedMatchHash = namedEmoji.reduce(function(memo, v) {
+            //    memo[v] = true;
+            //    return memo;
+            //}, {});
 
             var emoticonsProcessed;
             var emojiMegaRe;

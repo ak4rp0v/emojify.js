@@ -1,12 +1,8 @@
 var gulp = require('gulp'),
     $ = require('gulp-load-plugins')(),
     path = require('path'),
-    minimatch = require('minimatch'),
-    through2 = require('through2'),
     del      = require('del'),
-    inquirer = require('inquirer'),
-    sprite = require('css-sprite').stream;
-
+    inquirer = require('inquirer');
 
 var paths = {
     dist: {
@@ -14,13 +10,8 @@ var paths = {
     }
 };
 paths.dist.scripts = path.join(paths.dist.root, 'js');
-paths.dist.styles = { root: path.join(paths.dist.root, 'css') };
-paths.dist.styles.dataURI = path.join(paths.dist.styles.root, 'data-uri');
-paths.dist.styles.sprites = path.join(paths.dist.styles.root, 'sprites');
-paths.dist.styles.basic = path.join(paths.dist.styles.root, 'basic');
-paths.dist.images = { root: path.join(paths.dist.root, 'images') };
-paths.dist.images.separate = path.join(paths.dist.images.root, 'basic');
-paths.dist.images.sprites = path.join(paths.dist.images.root, 'sprites');
+paths.dist.styles  = path.join(paths.dist.root, 'css');
+paths.dist.images  = path.join(paths.dist.root, 'images');
 
 gulp.task('default', ['compile']);
 
@@ -47,133 +38,25 @@ gulp.task('script', function(){
         .pipe(gulp.dest(paths.dist.scripts));
 });
 
-var getEmoticonFilter = function(){
-    var emoticons = [
-        'named', 'heart', 'broken_heart', 'blush', 'smile', 'wink', 'disappointed', 'cry', 'smiley', 'kissing_heart',
-        'laughing', 'sunglasses', 'confused', 'neutral_face', 'monkey_face', 'open_mouth', 'angry', 'stuck_out_tongue',
-        'stuck_out_tongue_winking_eye', 'stuck_out_tongue_closed_eyes', 'smirk', 'rage', 'confounded', 'relaxed'
-    ];
 
-    return $.filter(function(file){
-        var index = emoticons.indexOf(path.basename(file.path, path.extname(file.path)));
-        if(index > -1){
-            emoticons.splice(index, 1);
-            return true;
-        }
-    })
-};
-
-gulp.task('images-and-styles', ['copy-styles', 'data-uri'], function(){
-
-
-    var emoticonFilter = getEmoticonFilter(),
-        cssFilter = $.filter('**.css'),
-        emoticonCssFilter = $.filter('**.css'),
-        emoticonPngFilter = $.filter('**.png');
-
-    return gulp.src('./src/images/emoji/*.png')
-
-        // copy images over as they are
-
-        .pipe(gulp.dest(paths.dist.images.separate))
-
-        // generate emoticon sprites
-
-        .pipe(emoticonFilter)
-        .pipe(sprite({
-            name: 'emojify-emoticons',
-            style: 'emojify-emoticons.css',
-            prefix: 'emoji',
-            cssPath: '../../images/sprites/',
-            orientation: 'binary-tree',
-            retina: true,
-            template: './build/sprites.mustache'
-        }))
-        .pipe(emoticonCssFilter)
-        .pipe($.replace('.emoji-+1', '.emoji-plus1'))
-        .pipe(gulp.dest(paths.dist.styles.sprites))
-        .pipe($.minifyCss())
-        .pipe($.rename({
-            suffix: '.min'
-        }))
-        .pipe(gulp.dest(paths.dist.styles.sprites))
-        .pipe(emoticonCssFilter.restore())
-        .pipe(emoticonPngFilter)
-        .pipe(gulp.dest(paths.dist.images.sprites))
-        .pipe(emoticonPngFilter.restore())
-        .pipe($.filter('!**sprites**')) //exclude generated spritesheets
-        .pipe(emoticonFilter.restore())
-
-        // generate all sprites
-
-        .pipe(sprite({
-            name: 'emojify',
-            style: 'emojify.css',
-            prefix: 'emoji',
-            cssPath: '../../images/sprites/',
-            orientation: 'binary-tree',
-            retina: true,
-            template: './build/sprites.mustache'
-        }))
-        .pipe(cssFilter)
-        .pipe($.replace('.emoji-+1', '.emoji-plus1'))
-        .pipe(gulp.dest(paths.dist.styles.sprites))
-        .pipe($.minifyCss())
-        .pipe($.rename({
-             suffix: '.min'
-        }))
-        .pipe(gulp.dest(paths.dist.styles.sprites))
-        .pipe(cssFilter.restore())
-        .pipe($.filter('**.png'))
-        .pipe(gulp.dest(paths.dist.images.sprites));
-});
-
-gulp.task('data-uri', function(){
-    var emoticonFilter = getEmoticonFilter();
-
-    return gulp.src('./src/images/emoji/*.png')
-        .pipe($.imageDataUri({
-            customClass: function(className){
-                return 'emoji-' + className
-            }
-        }))
-        .pipe(emoticonFilter)
-        .pipe($.concat('emojify-emoticons.css'))
-        .pipe($.replace('.emoji-+1', '.emoji-plus1'))
-        .pipe(gulp.dest(paths.dist.styles.dataURI))
-        .pipe($.minifyCss())
-        .pipe($.rename({
-            suffix: '.min'
-        }))
-        .pipe(gulp.dest(paths.dist.styles.dataURI))
-        .pipe(emoticonFilter.restore())
-
-        // generate all data-URIs
-
-        .pipe($.concat('emojify.css'))
-        .pipe($.replace('.emoji-+1', '.emoji-plus1'))
-        .pipe(gulp.dest(paths.dist.styles.dataURI))
-        .pipe($.minifyCss())
-        .pipe($.rename({
-            suffix: '.min'
-        }))
-        .pipe(gulp.dest(paths.dist.styles.dataURI));
+gulp.task('images-and-styles', ['copy-styles'], function(){
+    return gulp.src('./src/emoji/*.png')
+        .pipe(gulp.dest(paths.dist.images));
 });
 
 gulp.task('copy-styles', function(){
-    gulp.src('./src/css/basic/*.css')
-        .pipe(gulp.dest(paths.dist.styles.basic))
-        .pipe($.minifyCss())
+    gulp.src('./src/css/*.css')
+        .pipe(gulp.dest(paths.dist.styles))
+        .pipe($.cleanCss())
         .pipe($.rename({
             suffix: '.min'
         }))
-        .pipe(gulp.dest(paths.dist.styles.basic));
+        .pipe(gulp.dest(paths.dist.styles));
 });
 
 gulp.task('clean', function(done){
     del(paths.dist.root, done);
 });
-
 
 gulp.task('bump', function(done){
     inquirer.prompt({
@@ -186,7 +69,6 @@ gulp.task('bump', function(done){
             done();
             return;
         }
-
         gulp.src(['./bower.json', './package.json'])
             .pipe($.bump({type: result.bump}))
             .pipe(gulp.dest('./'))
